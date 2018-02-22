@@ -1,2 +1,1 @@
-# davberto
-Share space for random scripts/notebooks or work in progress 
+Space for random scripts/notebooks which don't yet have a home 🏠 
