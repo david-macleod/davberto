@@ -9,11 +9,14 @@ from copy import copy
 
 
 class Step(object):
+    '''
+    Step object is defined as a combination of a single xy position AND a single state in colour sequence
+    Also contains a history of xy positions that were visited in order to reach current step
+    '''
 	
     def __init__(self, path, seq_state):
         '''
-        Step object is defined as a combination of an xy position AND a specific state in colour sequence
-        :param path: list of (x,y) tuples recording path leading to step (inclusive)
+        :param path: list of (x,y) tuples recording path leading to step (inclusive of current xy)
         :param seq_state: integer position in colour sequence corresponding to step
         '''
         self.path = path
@@ -23,23 +26,24 @@ class Step(object):
         
     def neighbour_xy(self):
         ''' get xy coordinates of positions adjacent to step '''
-        x, y = self.xy
-        return [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+        return [(self.x-1, self.y), (self.x+1, self.y), (self.x, self.y-1), (self.x, self.y+1)]
 
 
 
 class Maze(object):
+    '''
+    Maze object generates Step objects from parsed input, and executes walks to find solution to maze
+    Also maintains the list of possible inputs for creating Step objects (valid_xy)
+    '''
     
     def __init__(self, maze_string, seq_string):
         '''
-        Maze object generates Step objects from parsed input, and executes walks to find solutions to maze
-        Maze also maintains list of possible inputs for creating Step objects
         :param maze_string: grid of maze colours, columns delimited by space, rows delimited by newline
         :param seq_string: sequence of maze colours, space delimited
         '''
         self.seq = seq_string.split()
         self.seq_len = len(self.seq)
-        self.max_y = 0
+        self.max_y = 0 # bottom row in maze
         self.valid_xy = self.parse_maze(maze_string)
         
         
@@ -54,12 +58,12 @@ class Maze(object):
         for y, row in enumerate(maze_string.split('\n')):
     	     for x, colour in enumerate(row.split()):
                 colour_map[colour].add((x, y))
-                self.max_y = max(y, self.max_y)
+                self.max_y = max(y, self.max_y) 
         return [copy(colour_map[colour]) for colour in self.seq]
 
     
     def get_first_steps(self):
-        ''' generate valid steps in bottom row of maze '''
+        ''' generate all valid steps from first (bottom) row of maze '''
         initial_xy = [(x, y) for x, y in self.valid_xy[0] if y == self.max_y]
         first_steps = self.generate_steps(
             xy_list=initial_xy,
@@ -68,7 +72,7 @@ class Maze(object):
     
     
     def get_next_steps(self, step):
-        ''' generate valid steps which neighbour current step '''
+        ''' generate valid steps which are adjacent to argument step '''
         next_steps = self.generate_steps(
             xy_list=step.neighbour_xy(),
             seq_state=self.next_state(step.seq_state),
@@ -80,8 +84,8 @@ class Maze(object):
         '''
         Generate steps dynamically from a static list of input coordinates, so that we do not visit the same step twice
         :param xy_list: list of (x,y) coordinate tuples
-        :param seq_state: state in colour sequence for steps to be generated
-        :param input_path: current path to prepend to xy coordinates
+        :param seq_state: state in colour sequence to generate steps for
+        :param input_path: current path to prepend to step xy coordinates
         :returns: Step object
         '''
         for xy in xy_list:
@@ -98,9 +102,9 @@ class Maze(object):
                 
     def walk(self, steps):
         '''
-        Recursive walk which follows steps until it reaches a step which exists in the top row of the maze
+        Recursive walk which follows steps until it reaches any step which exists in the top row of the maze
         If all possible paths reach a dead-end, or get stuck in a loop, an empty path is returned
-        :param steps: list of Step objects to attempt, which share the same state in colour sequence
+        :param steps: list of (next) Step objects to walk, which share the same state in colour sequence
         :returns: list of (x,y) coordinates recording solution path (or an empty list if no valid solution)
         '''
         for step in steps:
@@ -132,6 +136,7 @@ if __name__ == '__main__':
     
     small_maze = Maze(maze_string=small_maze_string, seq_string=small_seq_string)
     solution = small_maze.solve_maze() 
+    
     print('SMALL maze path:', solution)
 
 
@@ -160,8 +165,5 @@ if __name__ == '__main__':
     
     big_maze = Maze(maze_string=big_maze_string, seq_string=big_seq_string)
     solution = big_maze.solve_maze() 
-    print('BIG maze path:', solution)
     
-  
-    
-    
+    print('BIG maze path:', solution)    
